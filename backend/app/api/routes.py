@@ -50,6 +50,33 @@ def history(symbol: str, period: str = "6mo", interval: str = "1d") -> dict:
     }
 
 
+@router.get("/symbols/search")
+def search_symbols(q: str, limit: int = 12) -> list[dict]:
+    query = q.strip()
+    if not query:
+        return []
+
+    src = get_data_source()
+    if isinstance(src, AngelOneDataSource):
+        return src.search_symbols(query, limit=limit)
+
+    query_upper = query.upper()
+    rows = []
+    for symbol in settings.default_universe:
+        if query_upper in symbol.upper():
+            rows.append({
+                "symbol": symbol,
+                "source": "default",
+                "exchange": "NSE" if symbol.endswith(".NS") else "",
+                "trading_symbol": symbol.replace(".NS", "-EQ"),
+                "name": symbol.replace(".NS", ""),
+                "token": "",
+            })
+        if len(rows) >= limit:
+            break
+    return rows
+
+
 # ----- AI signal -----
 
 @router.get("/signal")

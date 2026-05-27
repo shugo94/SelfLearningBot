@@ -57,6 +57,8 @@ export interface SymbolMatch {
   source: "default" | "angel_one";
   exchange?: string;
   token?: string;
+  name: string;
+  trading_symbol?: string;
 }
 
 export const api = {

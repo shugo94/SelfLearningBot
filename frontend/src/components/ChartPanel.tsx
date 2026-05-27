@@ -72,6 +72,13 @@ export default function ChartPanel() {
     return () => { cancelled = true; clearInterval(id); };
   }, [symbol, tf]);
 
+  const loadSymbol = (nextSymbol: string) => {
+    const normalized = nextSymbol.trim().toUpperCase();
+    if (!normalized) return;
+    setInput(normalized);
+    setSymbol(normalized);
+  };
+
   const placeOrder = async (side: "BUY" | "SELL") => {
     setBusy(true);
     try {
@@ -103,11 +110,11 @@ export default function ChartPanel() {
             <SymbolSearch
               value={input}
               onChange={setInput}
-              onSelect={setSymbol}
+              onSelect={loadSymbol}
               placeholder="Search symbol..."
             />
           </div>
-          <button className="primary" onClick={() => setSymbol(input)}>Load</button>
+          <button className="primary" onClick={() => loadSymbol(input)}>Load</button>
           {lastUpdate && <span className="sub">⟳ {lastUpdate}</span>}
         </div>
       </div>

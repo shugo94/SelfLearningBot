@@ -48,6 +48,7 @@ class Instrument:
     exchange: str       # 'NSE' | 'BSE'
     tradingsymbol: str  # e.g. 'RELIANCE-EQ'
     token: str          # e.g. '2885'
+    name: str = ""      # e.g. 'RELIANCE INDUSTRIES'
 
 
 class AngelOneError(RuntimeError):
@@ -65,6 +66,7 @@ class AngelOneDataSource(DataSource):
         self._client: SmartConnect | None = None
         self._lock = threading.Lock()
         self._instruments: dict[str, list[Instrument]] | None = None
+        self._instrument_rows: list[Instrument] | None = None
         self._fallback = YahooDataSource()
 
     # ----- session -----
@@ -105,24 +107,79 @@ class AngelOneDataSource(DataSource):
 
         raw = json.loads(INSTRUMENT_PATH.read_text())
         index: dict[str, list[Instrument]] = {}
+        rows: list[Instrument] = []
         for row in raw:
             if row.get("exch_seg") not in ("NSE", "BSE"):
                 continue
             ts = row.get("symbol", "")
             if not ts:
                 continue
+            name = str(row.get("name") or row.get("symbol") or "")
             inst = Instrument(
                 exchange=row["exch_seg"],
                 tradingsymbol=ts,
                 token=str(row["token"]),
+                name=name,
             )
+            rows.append(inst)
             # Index by both the bare prefix ("RELIANCE") and the full symbol
             # ("RELIANCE-EQ") so callers can use either.
             base = ts.split("-")[0].upper()
             index.setdefault(base, []).append(inst)
             index.setdefault(ts.upper(), []).append(inst)
         self._instruments = index
+        self._instrument_rows = rows
         return index
+
+    def search_symbols(self, query: str, limit: int = 12) -> list[dict]:
+        """Return UI-friendly NSE/BSE equity matches for an autocomplete box."""
+        q = query.upper().strip()
+        if not q:
+            return []
+        self._load_instruments()
+        rows = self._instrument_rows or []
+
+        matches: list[tuple[int, Instrument]] = []
+        for inst in rows:
+            base = inst.tradingsymbol.split("-")[0].upper()
+            name = inst.name.upper()
+            is_cash_equity = inst.tradingsymbol.endswith("-EQ") or inst.exchange == "BSE"
+            if not is_cash_equity:
+                continue
+            if base == q:
+                score = 0
+            elif base.startswith(q):
+                score = 1
+            elif q in base:
+                score = 2
+            elif q in name:
+                score = 3
+            else:
+                continue
+            exchange_bias = 0 if inst.exchange == "NSE" else 1
+            matches.append((score * 10 + exchange_bias, inst))
+
+        matches.sort(key=lambda item: (item[0], item[1].tradingsymbol))
+        seen: set[str] = set()
+        out: list[dict] = []
+        for _, inst in matches:
+            base = inst.tradingsymbol.split("-")[0].upper()
+            suffix = ".NS" if inst.exchange == "NSE" else ".BO"
+            symbol = f"{base}{suffix}"
+            if symbol in seen:
+                continue
+            seen.add(symbol)
+            out.append({
+                "symbol": symbol,
+                "source": "angel_one",
+                "exchange": inst.exchange,
+                "trading_symbol": inst.tradingsymbol,
+                "name": inst.name or base,
+                "token": inst.token,
+            })
+            if len(out) >= limit:
+                break
+        return out
 
     def _resolve(self, symbol: str) -> Instrument:
         """Map a Yahoo-style symbol ('RELIANCE.NS') to an Angel instrument."""
