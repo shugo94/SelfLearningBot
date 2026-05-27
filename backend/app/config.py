@@ -19,11 +19,15 @@ class Settings:
     db_url: str = os.getenv("DB_URL", f"sqlite:///{DATA_DIR / 'selflearningbot.db'}")
     data_source: str = os.getenv("DATA_SOURCE", "yahoo")  # "yahoo" | "angel_one"
     starting_cash: float = float(os.getenv("STARTING_CASH", "1000000"))  # ₹10L paper
+    # Default universe for screener + dashboard. Kept small for performance.
+    # Symbol search will return all ~10k NSE/BSE stocks if Angel One is configured.
     default_universe: tuple[str, ...] = tuple(
         os.getenv(
             "DEFAULT_UNIVERSE",
             "RELIANCE.NS,TCS.NS,INFY.NS,HDFCBANK.NS,ICICIBANK.NS,SBIN.NS,"
-            "AXISBANK.NS,LT.NS,ITC.NS,KOTAKBANK.NS,BHARTIARTL.NS,HINDUNILVR.NS",
+            "AXISBANK.NS,LT.NS,ITC.NS,KOTAKBANK.NS,BHARTIARTL.NS,HINDUNILVR.NS,"
+            "MARUTI.NS,WIPRO.NS,ONGC.NS,BAJAJFINSV.NS,SUNPHARMA.NS,ASIANPAINT.NS,"
+            "BAJAJ-AUTO.NS,JSWSTEEL.NS,TATASTEEL.NS,POWERGRID.NS,GRASIM.NS,UPL.NS",
         ).split(",")
     )
     # Angel One credentials — only needed if data_source == "angel_one"

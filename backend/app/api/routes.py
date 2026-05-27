@@ -191,6 +191,58 @@ def config() -> dict:
     }
 
 
+@router.get("/symbols/search")
+def search_symbols(q: str = "") -> list[dict]:
+    """
+    Search for symbols. Returns:
+    - Empty query → default universe (popular stocks)
+    - 1-2 chars → default universe only (fast)
+    - 3+ chars → default + full Angel One instrument master if configured (comprehensive)
+
+    Results capped at 50 to keep UI responsive.
+    """
+    q = q.upper().strip()
+    results = []
+
+    if not q:
+        # No query — return default universe (popular/curated list)
+        return [{"symbol": s, "source": "default"} for s in settings.default_universe]
+
+    # Always search default universe first (fast, curated)
+    for sym in settings.default_universe:
+        if q in sym:
+            results.append({"symbol": sym, "source": "default"})
+
+    # If query is 3+ chars, also search Angel One instrument master (comprehensive)
+    # This catches rare symbols like "SYNGENE" or "MINDTREE" that aren't in defaults
+    if len(q) >= 3:
+        src = get_data_source()
+        if isinstance(src, AngelOneDataSource):
+            try:
+                instruments = src._load_instruments()
+                for sym_key, insts in instruments.items():
+                    if q in sym_key:
+                        for inst in insts:
+                            # Skip duplicates (already in default universe)
+                            already_added = any(
+                                r["symbol"] == inst.tradingsymbol for r in results
+                            )
+                            if not already_added and len(results) < 50:
+                                results.append({
+                                    "symbol": inst.tradingsymbol,
+                                    "exchange": inst.exchange,
+                                    "token": inst.token,
+                                    "source": "angel_one",
+                                })
+            except Exception:
+                # Angel instruments not available — no problem, return what we have
+                pass
+
+    # Sort: default universe first, then Angel One
+    results.sort(key=lambda r: (r["source"] != "default", r["symbol"]))
+    return results[:50]
+
+
 # ----- broker credentials -----
 
 class BrokerCredsBody(BaseModel):

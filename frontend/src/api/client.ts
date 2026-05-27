@@ -52,6 +52,12 @@ export interface BrokerCreds {
   password: string;
   totp_secret: string;
 }
+export interface SymbolMatch {
+  symbol: string;
+  source: "default" | "angel_one";
+  exchange?: string;
+  token?: string;
+}
 
 export const api = {
   quote: (symbol: string) => req<Quote>(`/api/quote?symbol=${encodeURIComponent(symbol)}`),
@@ -86,4 +92,6 @@ export const api = {
       `/api/broker/test`,
       { method: "POST" }
     ),
+  searchSymbols: (q: string) =>
+    req<SymbolMatch[]>(`/api/symbols/search?q=${encodeURIComponent(q)}`),
 };

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api, type BacktestResult } from "../api/client";
+import SymbolSearch from "./SymbolSearch";
 
 export default function BacktestPanel() {
   const [symbol, setSymbol] = useState("RELIANCE.NS");
@@ -29,7 +30,13 @@ export default function BacktestPanel() {
       <div className="card" style={{ marginBottom: 14 }}>
         <h3>Run a backtest</h3>
         <div className="row">
-          <input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} />
+          <div style={{ width: 200 }}>
+            <SymbolSearch
+              value={symbol}
+              onChange={setSymbol}
+              placeholder="e.g. RELIANCE.NS"
+            />
+          </div>
           <select value={period} onChange={(e) => setPeriod(e.target.value)}>
             <option value="6mo">6 months</option>
             <option value="1y">1 year</option>

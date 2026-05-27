@@ -6,9 +6,48 @@ A paper-trading desktop app for Indian markets with a modular AI/ML core that le
 
 ---
 
+## How to use it (quick start)
+
+1. **Start backend:**
+   ```bash
+   cd backend && source .venv/bin/activate
+   uvicorn app.main:app --reload --port 8765
+   ```
+
+2. **Start frontend (new terminal):**
+   ```bash
+   cd frontend && npm install && npm run dev
+   ```
+
+3. **App opens in Electron window** — 7 tabs:
+   - **Dashboard** — top AI picks, portfolio snapshot, recent learning
+   - **Chart & Signal** — live candlesticks (5m intraday or daily) with AI entry/exit signals + manual trading
+   - **Screener** — stock universe ranked by momentum+trend+breakout score
+   - **Backtest** — historical simulation + ML model training
+   - **Portfolio** — open positions, trade history, P&L
+   - **Learning Log** — what the bot learned from its own trades
+   - **Settings** — Angel One credentials (for live NSE/BSE data)
+
+4. **Search stocks** — all symbol inputs have a searchable dropdown:
+   - Type to filter default universe (RELIANCE.NS, TCS.NS, etc.)
+   - If Angel One is configured, also searches live instrument master
+   - 🔴 = Angel One (live), 📊 = Yahoo (delayed)
+
+5. **Place trades:**
+   - Chart tab → select symbol → view AI signal → adjust qty → click Buy/Sell
+   - Paper money, real market data
+
+6. **Watch it learn:**
+   - Close a trade
+   - Learning Log updates with P&L
+   - RL tuner nudges strategy parameters
+   - Next trade uses refined parameters
+
+---
+
 ## What's in the box
 
-**Backend** (`backend/`, Python 3.11 + FastAPI)
+**Backend** (`backend/`, Python 3.9+ + FastAPI)
 - `data/` — pluggable `DataSource` interface. **Yahoo Finance** adapter works out of the box; **Angel One SmartAPI** stub falls back to Yahoo until you supply credentials.
 - `strategy/` — technical indicators (SMA/EMA/RSI/MACD/Bollinger/ATR) + an RL-tunable MA-crossover strategy.
 - `ml/` — **XGBoost** signal on engineered features + a simple **RL parameter tuner** (EMA-rewards + random search) that nudges strategy parameters after every closed trade.

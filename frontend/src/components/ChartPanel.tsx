@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createChart, type IChartApi, type ISeriesApi } from "lightweight-charts";
 import { api, type Signal } from "../api/client";
+import SymbolSearch from "./SymbolSearch";
 
 type Tf = { label: string; interval: string; period: string; isIntraday: boolean };
 const TIMEFRAMES: Tf[] = [
@@ -98,13 +99,14 @@ export default function ChartPanel() {
               style={{ padding: "4px 10px" }}
             >{t.label}</button>
           ))}
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === "Enter" && setSymbol(input)}
-            placeholder="e.g. AAPL, INFY.NS"
-            style={{ width: 160 }}
-          />
+          <div style={{ width: 220 }}>
+            <SymbolSearch
+              value={input}
+              onChange={setInput}
+              onSelect={setSymbol}
+              placeholder="Search symbol..."
+            />
+          </div>
           <button className="primary" onClick={() => setSymbol(input)}>Load</button>
           {lastUpdate && <span className="sub">⟳ {lastUpdate}</span>}
         </div>
