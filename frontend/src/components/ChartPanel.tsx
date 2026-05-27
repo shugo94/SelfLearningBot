@@ -9,14 +9,14 @@ const TIMEFRAMES: Tf[] = [
   { label: "5m",  interval: "5m",  period: "5d",  isIntraday: true  },
   { label: "15m", interval: "15m", period: "1mo", isIntraday: true  },
   { label: "1h",  interval: "60m", period: "3mo", isIntraday: true  },
-  { label: "1D",  interval: "1d",  period: "6mo", isIntraday: false },
+  { label: "1D",  interval: "1d",  period: "5y",  isIntraday: false },  // Changed from 6mo to 5y for full history
 ];
 const REFRESH_MS = 30_000;
 
 export default function ChartPanel() {
   const [symbol, setSymbol] = useState("AAPL");
   const [input, setInput] = useState("AAPL");
-  const [tf, setTf] = useState<Tf>(TIMEFRAMES[1]); // default 5m
+  const [tf, setTf] = useState<Tf>(TIMEFRAMES[4]); // default 1D (5y history)
   const [sig, setSig] = useState<Signal | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
